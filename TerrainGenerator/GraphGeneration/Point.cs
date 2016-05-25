@@ -1,4 +1,6 @@
-﻿namespace TerrainGenerator.GraphGeneration
+﻿using System.Drawing;
+
+namespace TerrainGenerator.GraphGeneration
 {
     internal class Point
     {
@@ -6,5 +8,6 @@
         internal int Y = 0;
         internal int Z = 0;
         internal int Origin = 0;
+        internal Color Color = Color.Blue;
     }
 }

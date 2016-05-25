@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using TerrainGenerator.Biomes;
 using TerrainGenerator.General;
 
@@ -19,7 +20,7 @@ namespace TerrainGenerator.GraphGeneration
     internal class Voronoi
     {
         //internal List<List<int>> Matrix = new List<List<int>>();
-        private readonly List<Point>  _pointTable = new List<Point>();
+        private readonly List<Point> _pointTable = new List<Point>();
         internal readonly int X, Y, Spacing;
         private readonly Bitmap _image;
         private readonly Bitmap _colorMap;
@@ -86,7 +87,7 @@ namespace TerrainGenerator.GraphGeneration
                 });
             }
             var i = 0;
-            List<VNode> nodesForEdges = new List<VNode>();
+            var nodesForEdges = new List<VNode>();
             foreach (var region in _regions)
             {
                 foreach (var point in region)
@@ -119,20 +120,17 @@ namespace TerrainGenerator.GraphGeneration
                 }
                 if (nodesForEdges.Any())
                 {
-                    nodesForEdges = convexSort(nodesForEdges);
-
-                    if (i == 2)
+                    VNode midPoint;
+                    nodesForEdges = ConvexSort(nodesForEdges, out midPoint);
+                    
+                    for (var index = 0; index < nodesForEdges.Count; index++)
                     {
-                        for (var index = 0; index < nodesForEdges.Count; index++)
-                        {
-                            var nextNodeIndex = index + 1;
-                            if (nextNodeIndex == nodesForEdges.Count) nextNodeIndex = 0;
-                            // Create edge loop
-                            Edges.Add(new Edge(nodesForEdges[index], nodesForEdges[nextNodeIndex]));
-                            // create tri
-                            //Edges.Add(new Edge(nodesForEdges[index], centrePoint));
-                        }
-                        return;
+                        var nextNodeIndex = index + 1;
+                        if (nextNodeIndex == nodesForEdges.Count) nextNodeIndex = 0;
+                        // Create edge loop
+                        Edges.Add(new Edge(nodesForEdges[index], nodesForEdges[nextNodeIndex]));
+                        // create tri
+                        Edges.Add(new Edge(nodesForEdges[index], midPoint));
                     }
                     nodesForEdges.Clear();
                 }
@@ -140,12 +138,12 @@ namespace TerrainGenerator.GraphGeneration
             }
         }
 
-        private List<VNode> convexSort(List<VNode> nodesForEdges)
+        private List<VNode> ConvexSort(List<VNode> nodesForEdges, out VNode midPoint)
         {
-            VNode minX = new VNode { X = X };
-            VNode minY = new VNode { Y = Y };
-            VNode maxX = new VNode();
-            VNode maxY = new VNode();
+            var minX = new VNode { X = X };
+            var minY = new VNode { Y = Y };
+            var maxX = new VNode();
+            var maxY = new VNode();
             // Find minX, minY, maxX, maxY
             foreach (var node in nodesForEdges)
             {
@@ -154,13 +152,25 @@ namespace TerrainGenerator.GraphGeneration
                 if (node.X > maxX.X) maxX = node;
                 if (node.Y > maxY.Y) maxY = node;
             }
+            midPoint = new VNode
+            {
+                X = (minX.X + maxX.X) / 2,
+                Y = (minY.Y + maxY.Y) / 2
+            };
+            VNode middlePoint = midPoint;
+            nodesForEdges = new List<VNode>(nodesForEdges.OrderByDescending(p =>
+            {
+                var angle = GetAngleDegree(middlePoint, p);
+                return angle;
+            }));
 
-            return new List<VNode>();
+            return nodesForEdges;
         }
 
-        private double RadianToDegree(double angle)
+        public static double GetAngleDegree(VNode origin, VNode target)
         {
-            return angle * (180.0 / Math.PI);
+            var n = 270 - Math.Atan2(origin.Y - target.Y, origin.X - target.X) * 180 / Math.PI;
+            return n % 360;
         }
 
         private int ColoursDifferent(Point p)
@@ -169,8 +179,8 @@ namespace TerrainGenerator.GraphGeneration
             var y = p.Y;
             var diffCount = 0;
             var edge = false;
-            List<Color> excludedSamples = new List<Color> { _colorMap.GetPixel(x, y) };
-            List<Color> allSamples = new List<Color>();
+            var excludedSamples = new List<Color> { _colorMap.GetPixel(x, y) };
+            var allSamples = new List<Color>();
             for (var xx = x - 1; xx <= x + 1; xx++)
             {
                 if (xx < 0 || xx >= X)
@@ -399,7 +409,7 @@ namespace TerrainGenerator.GraphGeneration
             }
         }
 
-        object bmpLock = new object();
+        readonly object _bmpLock = new object();
         internal void CreateSites()
         {
             Enumerable.Range(0, Y)
@@ -409,7 +419,7 @@ namespace TerrainGenerator.GraphGeneration
                     for (var ww = 0; ww < X; ww++)
                     {
                         var ind = -1;
-                        var dist = int.MaxValue;
+                        var dist = Int32.MaxValue;
                         for (var it = 0; it < _pointTable.Count; it++)
                         {
                             var p = _pointTable[it];
@@ -427,7 +437,7 @@ namespace TerrainGenerator.GraphGeneration
                             //Matrix[ww][hh] = ind;
                             var c = _biome[ind].Color;
 
-                            lock (bmpLock)
+                            lock (_bmpLock)
                             {
                                 if (c == Color.DarkBlue)
                                 {

@@ -1,0 +1,8 @@
+D:\GameDev\TerrainGenerator\TerrainGenerator\TerrainGenerator\bin\Debug\TerrainGenerator.exe.config
+D:\GameDev\TerrainGenerator\TerrainGenerator\TerrainGenerator\obj\Debug\TerrainGenerator.csprojResolveAssemblyReference.cache
+D:\GameDev\TerrainGenerator\TerrainGenerator\TerrainGenerator\bin\Debug\TerrainGenerator.exe
+D:\GameDev\TerrainGenerator\TerrainGenerator\TerrainGenerator\bin\Debug\TerrainGenerator.pdb
+D:\GameDev\TerrainGenerator\TerrainGenerator\TerrainGenerator\obj\Debug\TerrainGenerator.exe
+D:\GameDev\TerrainGenerator\TerrainGenerator\TerrainGenerator\obj\Debug\TerrainGenerator.pdb
+D:\GameDev\TerrainGenerator\TerrainGenerator\TerrainGenerator\bin\Debug\MIConvexHull.dll
+D:\GameDev\TerrainGenerator\TerrainGenerator\TerrainGenerator\bin\Debug\MIConvexHull.pdb

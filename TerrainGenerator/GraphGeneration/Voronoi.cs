@@ -33,6 +33,17 @@ namespace TerrainGenerator.GraphGeneration
         public MapType MapType { get; set; } = MapType.RandomIsland;
         public List<VNode> Nodes { get; } = new List<VNode>();
         public List<Edge> Edges { get; } = new List<Edge>();
+        private int _vnodeId = 0;
+
+        private int VNodeId
+        {
+            get
+            {
+                _vnodeId++;
+                return _vnodeId;
+            }
+
+        }
 
         internal Voronoi(int x, int y, Bitmap perlin, int spacing = 10, int moisture = 3)
         {
@@ -82,8 +93,8 @@ namespace TerrainGenerator.GraphGeneration
                 Nodes.Add(new VNode
                 {
                     X = x,
-                    Y = y,
-                    Z = _perlin.GetPixel(x, y).R
+                    Y = _perlin.GetPixel(x, y).R,
+                    Z = y
                 });
             }
             var i = 0;
@@ -110,9 +121,10 @@ namespace TerrainGenerator.GraphGeneration
                         if (point.X - 1 > 0 && point.Y + 1 < Y) _image.SetPixel(point.X - 1, point.Y + 1, Color.Red);
                         var node = new VNode
                         {
+                            ID = VNodeId,
                             X = point.X,
-                            Y = point.Y,
-                            Z = _perlin.GetPixel(point.X, point.Y).R
+                            Y = _perlin.GetPixel(point.X, point.Y).R,
+                            Z = point.Y
                         };
                         nodesForEdges.Add(node);
                         Nodes.Add(node);
@@ -142,20 +154,26 @@ namespace TerrainGenerator.GraphGeneration
         {
             var minX = new VNode { X = X };
             var minY = new VNode { Y = Y };
+            var minZ = new VNode { Z = 255 };
             var maxX = new VNode();
             var maxY = new VNode();
+            var maxZ = new VNode();
             // Find minX, minY, maxX, maxY
             foreach (var node in nodesForEdges)
             {
                 if (node.X < minX.X) minX = node;
                 if (node.Y < minY.Y) minY = node;
+                if (node.Z < minY.Z) minZ = node;
                 if (node.X > maxX.X) maxX = node;
                 if (node.Y > maxY.Y) maxY = node;
+                if (node.Z > maxX.Z) maxZ = node;
             }
             midPoint = new VNode
             {
+                ID = VNodeId,
                 X = (minX.X + maxX.X) / 2,
-                Y = (minY.Y + maxY.Y) / 2
+                Y = (minY.Y + maxY.Y) / 2,
+                Z = (minZ.Z + maxZ.Z) / 2
             };
             VNode middlePoint = midPoint;
             nodesForEdges = new List<VNode>(nodesForEdges.OrderByDescending(p =>
@@ -169,7 +187,7 @@ namespace TerrainGenerator.GraphGeneration
 
         public static double GetAngleDegree(VNode origin, VNode target)
         {
-            var n = 270 - Math.Atan2(origin.Y - target.Y, origin.X - target.X) * 180 / Math.PI;
+            var n = 270 - Math.Atan2(origin.Z - target.Z, origin.X - target.X) * 180 / Math.PI;
             return n % 360;
         }
 

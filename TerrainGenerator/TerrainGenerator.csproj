@@ -33,8 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MIConvexHull, Version=1.0.10.1021, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.0.10.1045\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+    <Reference Include="Aspose.3D, Version=1.6.0.0, Culture=neutral, PublicKeyToken=f071c641d0b4582b, processorArchitecture=MSIL">
+      <HintPath>..\packages\Aspose.3D.1.6.0.0\lib\net40\Aspose.3D.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -49,9 +49,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Biomes\Biome.cs" />
+    <Compile Include="General\LambdaComparer.cs" />
+    <Compile Include="ThreeDFile\fbx.cs" />
     <Compile Include="GraphGeneration\Edge.cs" />
-    <Compile Include="GraphGeneration\Node.cs" />
-    <Compile Include="GraphGeneration\Vertex.cs" />
+    <Compile Include="GraphGeneration\VNode.cs" />
     <Compile Include="NoiseGeneration\DiamondSquare.cs" />
     <Compile Include="NoiseGeneration\PerlinNoiseMap.cs" />
     <Compile Include="GraphGeneration\Point.cs" />

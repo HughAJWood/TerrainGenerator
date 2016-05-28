@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
@@ -27,7 +29,7 @@ namespace TerrainGenerator.GraphGeneration
         private readonly Bitmap _colorMap;
         private readonly Bitmap _perlin;
         private readonly List<Biome> _biome = new List<Biome>();
-        private readonly List<List<Point>> _regions = new List<List<Point>>();
+        private readonly List<ConcurrentBag<Point>> _regions = new List<ConcurrentBag<Point>>();
         private readonly int _moisture;
         public int Iterations { get; set; } = 1;
         public bool DoShowPoints { get; set; } = false;
@@ -194,7 +196,7 @@ namespace TerrainGenerator.GraphGeneration
 
                 if (node.X > maxX.X) maxX = node;
                 if (node.Y > maxY.Y) maxY = node;
-                if (node.Z > maxX.Z) maxZ = node;
+                if (node.Z > maxZ.Z) maxZ = node;
             }
             midPoint = new VNode
             {
@@ -298,7 +300,7 @@ namespace TerrainGenerator.GraphGeneration
             _pointTable.AddRange(newPointTable);
         }
 
-        public Point GetCentrePoint(List<Point> region, Point origin)
+        public Point GetCentrePoint(ConcurrentBag<Point> region, Point origin)
         {
             var avx = region.Sum(p => p.X)/region.Count;
             var avy = region.Sum(p => p.Y)/region.Count;
@@ -316,7 +318,7 @@ namespace TerrainGenerator.GraphGeneration
             var onePerlinDistance = 255/(double)maxDistance;
             foreach (var point in _pointTable)
             {
-                _regions.Add(new List<Point>());
+                _regions.Add(new ConcurrentBag<Point>());
                 int perlinLevel = _perlin.GetPixel(point.X, point.Y).R;
                 if (perlinLevel == 0) perlinLevel = 1;
 
@@ -367,7 +369,7 @@ namespace TerrainGenerator.GraphGeneration
             };
             foreach (var point in _pointTable)
             {
-                _regions.Add(new List<Point>());
+                _regions.Add(new ConcurrentBag<Point>());
                 var distance = DistanceSqrd(point, p.X, p.Y);
                 var perlinLevel = (int) Math.Round(_perlin.GetPixel(point.X, point.Y).R/(double) 64, 0);
                 if (perlinLevel == 0) perlinLevel = 1;

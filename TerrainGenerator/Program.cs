@@ -16,9 +16,9 @@ namespace TerrainGenerator
     {
         static void Main(string[] args)
         {
-            const int x = 1024;
-            const int y = 1024;
-            const int spacing = 64;
+            const int x = 512;
+            const int y = 512;
+            const int spacing = 32;
             
             var diamondSquare = new DiamondSquare(new Bitmap(x, y));
             var image = diamondSquare.AlgorithmMain(128, 1);
@@ -36,7 +36,7 @@ namespace TerrainGenerator
             // create a Box model
             scene.RootNode.CreateChildNode("main", voronoi.Mesh);
             // save drawing in the FBX format
-            scene.Save("test.fbx", FileFormat.FBX7500ASCII);
+            scene.Save("test.fbx", FileFormat.FBX7500Binary);
         }
     }
 }

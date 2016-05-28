@@ -1,10 +1,12 @@
-﻿namespace TerrainGenerator.GraphGeneration
+﻿using System;
+
+namespace TerrainGenerator.GraphGeneration
 {
     internal class VNode
     {
-        internal int ID = 0;
-        internal double X = 0.00;
-        internal double Y = 0.00;
-        internal double Z = 0.00;
+        internal int ID = -1;
+        internal int X = 0;
+        internal int Y = 0;
+        internal int Z = 0;
     }
 }

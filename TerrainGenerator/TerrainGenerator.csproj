@@ -34,8 +34,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Aspose.3D, Version=1.6.0.0, Culture=neutral, PublicKeyToken=f071c641d0b4582b, processorArchitecture=MSIL">
-      <HintPath>..\packages\Aspose.3D.1.6.0.0\lib\net40\Aspose.3D.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Aspose.3D.1.6.0.0\lib\net40_ClientProfile_AuthenticodeSigned\Aspose.3D.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Biomes\Biome.cs" />
+    <Compile Include="General\Helpers.cs" />
     <Compile Include="General\LambdaComparer.cs" />
     <Compile Include="ThreeDFile\fbx.cs" />
     <Compile Include="GraphGeneration\Edge.cs" />

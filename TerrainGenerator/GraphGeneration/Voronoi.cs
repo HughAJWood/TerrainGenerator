@@ -4,6 +4,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Aspose.ThreeD.Entities;
+using Aspose.ThreeD.Utilities;
 using TerrainGenerator.Biomes;
 using TerrainGenerator.General;
 
@@ -33,7 +35,8 @@ namespace TerrainGenerator.GraphGeneration
         public MapType MapType { get; set; } = MapType.RandomIsland;
         public List<VNode> Nodes { get; } = new List<VNode>();
         public List<Edge> Edges { get; } = new List<Edge>();
-        private int _vnodeId = 0;
+        private int _vnodeId = -1;
+        public Mesh Mesh { get; } = new Mesh("voronoiMesh");
 
         private int VNodeId
         {
@@ -98,6 +101,7 @@ namespace TerrainGenerator.GraphGeneration
                 });
             }
             var i = 0;
+            var w = 0;
             var nodesForEdges = new List<VNode>();
             foreach (var region in _regions)
             {
@@ -110,6 +114,7 @@ namespace TerrainGenerator.GraphGeneration
                     var diff = ColoursDifferent(point);
                     if (diff > 1)
                     {
+#if DEBUG
                         _image.SetPixel(point.X, point.Y, Color.Red);
                         if(point.X + 1 < X) _image.SetPixel(point.X + 1, point.Y, Color.Red);
                         if (point.X - 1 > 0) _image.SetPixel(point.X - 1, point.Y, Color.Red);
@@ -119,42 +124,69 @@ namespace TerrainGenerator.GraphGeneration
                         if (point.Y + 1 < Y) _image.SetPixel(point.X, point.Y + 1, Color.Red);
                         if (point.X + 1 < X && point.Y + 1 < Y) _image.SetPixel(point.X + 1, point.Y + 1, Color.Red);
                         if (point.X - 1 > 0 && point.Y + 1 < Y) _image.SetPixel(point.X - 1, point.Y + 1, Color.Red);
+#endif
+                        // Points are 2D, so to translate to 3D they are set to the Z property of the 3D node
                         var node = new VNode
                         {
-                            ID = VNodeId,
                             X = point.X,
-                            Y = _perlin.GetPixel(point.X, point.Y).R,
                             Z = point.Y
                         };
+                        // Weld points within 1 unit from each other by determining if we already have one that exists
+                        // then using the existing node instead
+                        // A weld is calculated by determining the X,Z distance to see if we have a node stored already
+                        // that is within 2 units of the node we are creating
+                        VNode existingNode = Nodes.FirstOrDefault(n => n.Adjacent(node));
+                        if (existingNode == null)
+                        {
+                            // Optimise node creation for skipping perlin lookup and ID iteration for only when needed
+                            node.ID = VNodeId;
+                            node.Y = _perlin.GetPixel(point.X, point.Y).R;
+                            Nodes.Add(node);
+                        }
+                        else
+                        {
+                            node = existingNode;
+                            w++;
+                        }
+                        Mesh.ControlPoints.Add(new Vector4(node.X, node.Y, node.Z, 1));
                         nodesForEdges.Add(node);
-                        Nodes.Add(node);
                     }
                 }
                 if (nodesForEdges.Any())
                 {
                     VNode midPoint;
                     nodesForEdges = ConvexSort(nodesForEdges, out midPoint);
+                    Mesh.ControlPoints.Add(new Vector4(midPoint.X, midPoint.Y, midPoint.Z, 1));
                     
+                    // Create voronoi region 1 tri at a time
                     for (var index = 0; index < nodesForEdges.Count; index++)
                     {
+                        var n = nodesForEdges[index];
                         var nextNodeIndex = index + 1;
                         if (nextNodeIndex == nodesForEdges.Count) nextNodeIndex = 0;
-                        // Create edge loop
-                        Edges.Add(new Edge(nodesForEdges[index], nodesForEdges[nextNodeIndex]));
-                        // create tri
-                        Edges.Add(new Edge(nodesForEdges[index], midPoint));
+
+                        //// Add tri poly
+                        Mesh.CreatePolygon(new[] { n.ID, nodesForEdges[nextNodeIndex].ID, midPoint.ID });
                     }
                     nodesForEdges.Clear();
                 }
                 i++;
             }
+            Console.WriteLine($"Welds made:{w}");
+            Console.ReadLine();
         }
-
+        /// <summary>
+        /// Sort points by determining bounding box centre then sorting by the angle from the bounding box 12 o'clock line.
+        /// </summary>
+        /// <param name="nodesForEdges">The bounding points as determined by reading the image</param>
+        /// <param name="midPoint">Returns the centre of the bounding box to act as the centre of the region</param>
+        /// <returns></returns>
         private List<VNode> ConvexSort(List<VNode> nodesForEdges, out VNode midPoint)
         {
+            // We are flipping Z and Y to go from 2D to 3D
             var minX = new VNode { X = X };
-            var minY = new VNode { Y = Y };
-            var minZ = new VNode { Z = 255 };
+            var minY = new VNode { Y = 255 };
+            var minZ = new VNode { Z = Y };
             var maxX = new VNode();
             var maxY = new VNode();
             var maxZ = new VNode();
@@ -163,7 +195,8 @@ namespace TerrainGenerator.GraphGeneration
             {
                 if (node.X < minX.X) minX = node;
                 if (node.Y < minY.Y) minY = node;
-                if (node.Z < minY.Z) minZ = node;
+                if (node.Z < minZ.Z) minZ = node;
+
                 if (node.X > maxX.X) maxX = node;
                 if (node.Y > maxY.Y) maxY = node;
                 if (node.Z > maxX.Z) maxZ = node;
@@ -457,10 +490,10 @@ namespace TerrainGenerator.GraphGeneration
 
                             lock (_bmpLock)
                             {
-                                if (c == Color.DarkBlue)
-                                {
-                                    _perlin.SetPixel(ww, hh, c);
-                                }
+                                //if (c == Color.DarkBlue)
+                                //{
+                                //    _perlin.SetPixel(ww, hh, c);
+                                //}
                                 _colorMap.SetPixel(ww,hh,Color.FromArgb(ind));
                                 _image.SetPixel(ww, hh, c);
                             }

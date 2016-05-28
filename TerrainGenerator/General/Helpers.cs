@@ -12,7 +12,7 @@ namespace TerrainGenerator.General
         internal static bool Adjacent(this VNode a, VNode b)
         {
             var distance = Math.Abs(a.X - b.X) + Math.Abs(a.Z - b.Z);
-            return distance == 0 || distance == 1 || distance == 2;
+            return distance < 3;
         }
     }
 }

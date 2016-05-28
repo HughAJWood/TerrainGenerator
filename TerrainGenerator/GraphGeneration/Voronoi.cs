@@ -21,7 +21,6 @@ namespace TerrainGenerator.GraphGeneration
     }
     internal class Voronoi
     {
-        //internal List<List<int>> Matrix = new List<List<int>>();
         private readonly List<Point> _pointTable = new List<Point>();
         internal readonly int X, Y, Spacing;
         private readonly Bitmap _image;
@@ -61,7 +60,6 @@ namespace TerrainGenerator.GraphGeneration
 
         public Bitmap Render()
         {
-            //ZeroMatrix();
             CreatePointTable();
             switch (MapType)
             {
@@ -89,19 +87,7 @@ namespace TerrainGenerator.GraphGeneration
 
         private void CalculatePolys()
         {
-            foreach (var t in _pointTable)
-            {
-                var x = t.X;
-                var y = t.Y;
-                Nodes.Add(new VNode
-                {
-                    X = x,
-                    Y = _perlin.GetPixel(x, y).R,
-                    Z = y
-                });
-            }
             var i = 0;
-            var w = 0;
             var nodesForEdges = new List<VNode>();
             foreach (var region in _regions)
             {
@@ -111,19 +97,12 @@ namespace TerrainGenerator.GraphGeneration
                     {
                         continue;
                     }
+                    // We calculate where the voronoi node corners are, and pass them into the region
                     var diff = ColoursDifferent(point);
                     if (diff > 1)
                     {
 #if DEBUG
-                        _image.SetPixel(point.X, point.Y, Color.Red);
-                        if(point.X + 1 < X) _image.SetPixel(point.X + 1, point.Y, Color.Red);
-                        if (point.X - 1 > 0) _image.SetPixel(point.X - 1, point.Y, Color.Red);
-                        if (point.Y - 1 > 0) _image.SetPixel(point.X, point.Y - 1, Color.Red);
-                        if (point.X + 1 < X && point.Y - 1 > 0) _image.SetPixel(point.X + 1, point.Y - 1, Color.Red);
-                        if (point.X - 1 > 0 && point.Y - 1 > 0) _image.SetPixel(point.X - 1, point.Y - 1, Color.Red);
-                        if (point.Y + 1 < Y) _image.SetPixel(point.X, point.Y + 1, Color.Red);
-                        if (point.X + 1 < X && point.Y + 1 < Y) _image.SetPixel(point.X + 1, point.Y + 1, Color.Red);
-                        if (point.X - 1 > 0 && point.Y + 1 < Y) _image.SetPixel(point.X - 1, point.Y + 1, Color.Red);
+                        RenderNodePointsOnImage(point);
 #endif
                         // Points are 2D, so to translate to 3D they are set to the Z property of the 3D node
                         var node = new VNode
@@ -138,43 +117,59 @@ namespace TerrainGenerator.GraphGeneration
                         VNode existingNode = Nodes.FirstOrDefault(n => n.Adjacent(node));
                         if (existingNode == null)
                         {
-                            // Optimise node creation for skipping perlin lookup and ID iteration for only when needed
+                            // Optimise node creation by skipping perlin lookup and ID iteration for only when needed
                             node.ID = VNodeId;
                             node.Y = _perlin.GetPixel(point.X, point.Y).R;
                             Nodes.Add(node);
+                            Mesh.ControlPoints.Add(new Vector4(node.X, node.Y, node.Z, 1));
                         }
                         else
                         {
                             node = existingNode;
-                            w++;
                         }
-                        Mesh.ControlPoints.Add(new Vector4(node.X, node.Y, node.Z, 1));
                         nodesForEdges.Add(node);
                     }
                 }
-                if (nodesForEdges.Any())
-                {
-                    VNode midPoint;
-                    nodesForEdges = ConvexSort(nodesForEdges, out midPoint);
-                    Mesh.ControlPoints.Add(new Vector4(midPoint.X, midPoint.Y, midPoint.Z, 1));
-                    
-                    // Create voronoi region 1 tri at a time
-                    for (var index = 0; index < nodesForEdges.Count; index++)
-                    {
-                        var n = nodesForEdges[index];
-                        var nextNodeIndex = index + 1;
-                        if (nextNodeIndex == nodesForEdges.Count) nextNodeIndex = 0;
-
-                        //// Add tri poly
-                        Mesh.CreatePolygon(new[] { n.ID, nodesForEdges[nextNodeIndex].ID, midPoint.ID });
-                    }
-                    nodesForEdges.Clear();
-                }
-                i++;
+                //if (i++ > 20) return;
+                AddNodesToMeshAsPolys(nodesForEdges);
+                nodesForEdges.Clear();
             }
-            Console.WriteLine($"Welds made:{w}");
-            Console.ReadLine();
         }
+
+        private void RenderNodePointsOnImage(Point point)
+        {
+            _image.SetPixel(point.X, point.Y, Color.Red);
+            if (point.X + 1 < X) _image.SetPixel(point.X + 1, point.Y, Color.Red);
+            if (point.X - 1 > 0) _image.SetPixel(point.X - 1, point.Y, Color.Red);
+            if (point.Y - 1 > 0) _image.SetPixel(point.X, point.Y - 1, Color.Red);
+            if (point.X + 1 < X && point.Y - 1 > 0) _image.SetPixel(point.X + 1, point.Y - 1, Color.Red);
+            if (point.X - 1 > 0 && point.Y - 1 > 0) _image.SetPixel(point.X - 1, point.Y - 1, Color.Red);
+            if (point.Y + 1 < Y) _image.SetPixel(point.X, point.Y + 1, Color.Red);
+            if (point.X + 1 < X && point.Y + 1 < Y) _image.SetPixel(point.X + 1, point.Y + 1, Color.Red);
+            if (point.X - 1 > 0 && point.Y + 1 < Y) _image.SetPixel(point.X - 1, point.Y + 1, Color.Red);
+        }
+
+        private void AddNodesToMeshAsPolys(List<VNode> nodesForEdges)
+        {
+            if (nodesForEdges.Any())
+            {
+                VNode midPoint;
+                nodesForEdges = ConvexSort(nodesForEdges, out midPoint);
+                Mesh.ControlPoints.Add(new Vector4(midPoint.X, midPoint.Y, midPoint.Z, 1));
+
+                // Create voronoi region 1 tri at a time
+                for (var index = 0; index < nodesForEdges.Count; index++)
+                {
+                    var n = nodesForEdges[index];
+                    var nextNodeIndex = index + 1;
+                    if (nextNodeIndex == nodesForEdges.Count) nextNodeIndex = 0;
+
+                    // Add tri poly
+                    Mesh.CreatePolygon(new[] {n.ID, nodesForEdges[nextNodeIndex].ID, midPoint.ID});
+                }
+            }
+        }
+
         /// <summary>
         /// Sort points by determining bounding box centre then sorting by the angle from the bounding box 12 o'clock line.
         /// </summary>
@@ -485,15 +480,10 @@ namespace TerrainGenerator.GraphGeneration
                         if (ind > -1)
                         {
                             _regions[ind].Add(new Point { X = ww, Y = hh });
-                            //Matrix[ww][hh] = ind;
                             var c = _biome[ind].Color;
 
                             lock (_bmpLock)
                             {
-                                //if (c == Color.DarkBlue)
-                                //{
-                                //    _perlin.SetPixel(ww, hh, c);
-                                //}
                                 _colorMap.SetPixel(ww,hh,Color.FromArgb(ind));
                                 _image.SetPixel(ww, hh, c);
                             }

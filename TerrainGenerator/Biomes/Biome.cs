@@ -4,23 +4,6 @@ using System.Text.RegularExpressions;
 
 namespace TerrainGenerator.Biomes
 {
-    internal enum BiomeNames
-    {
-        Sea,
-        Snow,
-        Tundra,
-        Bare,
-        Scorched,
-        Taiga,
-        Shrubland,
-        TemperateDesert,
-        TemperateRainForest,
-        TemperateDeciduousForest,
-        Grassland,
-        TropicalRainForest,
-        TropicalSeasonalForest,
-        SubtropicalDesert
-    }
     internal class Biome
     {
         private readonly BiomeNames[,] _biomes =

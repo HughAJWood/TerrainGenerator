@@ -13,14 +13,6 @@ using TerrainGenerator.General;
 
 namespace TerrainGenerator.GraphGeneration
 {
-    public enum MapType
-    {
-        Radial,
-        Square,
-        RandomTile,
-        RandomRadial,
-        RandomIsland
-    }
     internal class Voronoi : IDisposable
     {
         private readonly List<Point> _pointTable = new List<Point>();
@@ -372,68 +364,62 @@ namespace TerrainGenerator.GraphGeneration
                 var distance = DistanceSqrd(point, p.X, p.Y);
                 var perlinLevel = (int) Math.Round(_perlin.GetPixel(point.X, point.Y).R/(double) 64, 0);
                 if (perlinLevel == 0) perlinLevel = 1;
+                Biome b;
                 if (perlinLevel == 1 || distance > distances[1])
                 {
                     // Sea
-                    var b = new Biome {MoistureLevel = 100};
-                    _biome.Add(b);
+                    b = new Biome {MoistureLevel = 100};
                 }
                 else if (distance > distances[2])
                 {
-                    var b = new Biome
+                    b = new Biome
                     {
                         Elevation = perlinLevel, MoistureLevel = 1
                     };
-                    _biome.Add(b);
                 }
                 else if (distance > distances[3])
                 {
-                    var b = new Biome
+                    b = new Biome
                     {
                         Elevation = perlinLevel, MoistureLevel = 2
                     };
-                    _biome.Add(b);
                 }
                 else if (distance > distances[4])
                 {
-                    var b = new Biome
+                    b = new Biome
                     {
                         Elevation = perlinLevel, MoistureLevel = 3
                     };
-                    _biome.Add(b);
                 }
                 else if (distance > distances[5])
                 {
-                    var b = new Biome
+                    b = new Biome
                     {
                         Elevation = perlinLevel, MoistureLevel = 1
                     };
-                    _biome.Add(b);
                 }
                 else if (distance > distances[6])
                 {
-                    var b = new Biome
+                    b = new Biome
                     {
                         Elevation = 3, MoistureLevel = 1
                     };
-                    _biome.Add(b);
                 }
                 else if (distance < distances[7])
                 {
-                    var b = new Biome
+                    b = new Biome
                     {
                         Elevation = 4, MoistureLevel = 1
                     };
-                    _biome.Add(b);
                 }
                 else
                 {
-                    var b = new Biome
+                    b = new Biome
                     {
                         Elevation = perlinLevel, MoistureLevel = perlinLevel > 4 ? 4 : perlinLevel
                     };
-                    _biome.Add(b);
                 }
+                _biome.Add(b);
             }
         }
 

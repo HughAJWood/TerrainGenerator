@@ -49,9 +49,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Biomes\Biome.cs" />
+    <Compile Include="Biomes\BiomeNames.cs" />
     <Compile Include="General\Helpers.cs" />
     <Compile Include="General\LambdaComparer.cs" />
     <Compile Include="GraphGeneration\Edge.cs" />
+    <Compile Include="GraphGeneration\MapType.cs" />
     <Compile Include="GraphGeneration\VNode.cs" />
     <Compile Include="NoiseGeneration\DiamondSquare.cs" />
     <Compile Include="NoiseGeneration\PerlinNoiseMap.cs" />

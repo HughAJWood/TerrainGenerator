@@ -51,7 +51,6 @@
     <Compile Include="Biomes\Biome.cs" />
     <Compile Include="General\Helpers.cs" />
     <Compile Include="General\LambdaComparer.cs" />
-    <Compile Include="ThreeDFile\fbx.cs" />
     <Compile Include="GraphGeneration\Edge.cs" />
     <Compile Include="GraphGeneration\VNode.cs" />
     <Compile Include="NoiseGeneration\DiamondSquare.cs" />

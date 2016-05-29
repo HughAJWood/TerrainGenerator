@@ -21,7 +21,7 @@ namespace TerrainGenerator.GraphGeneration
         RandomRadial,
         RandomIsland
     }
-    internal class Voronoi
+    internal class Voronoi : IDisposable
     {
         private readonly List<Point> _pointTable = new List<Point>();
         internal readonly int X, Y, Spacing;
@@ -89,7 +89,6 @@ namespace TerrainGenerator.GraphGeneration
 
         private void CalculatePolys()
         {
-            var i = 0;
             var nodesForEdges = new List<VNode>();
             foreach (var region in _regions)
             {
@@ -503,6 +502,18 @@ namespace TerrainGenerator.GraphGeneration
             var xd = ww - point.X;
             var yd = hh - point.Y;
             return xd*xd + yd*yd;
+        }
+
+        ~Voronoi()
+        {
+            this.Dispose();
+        }
+
+        public void Dispose()
+        {
+            _image.Dispose();
+            _colorMap.Dispose();
+            _perlin.Dispose();
         }
     }
 }

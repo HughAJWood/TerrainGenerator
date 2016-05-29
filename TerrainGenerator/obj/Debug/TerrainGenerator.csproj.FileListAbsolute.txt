@@ -12,5 +12,4 @@ C:\Users\silic\Source\Repos\TerrainGenerator\TerrainGenerator\bin\Debug\TerrainG
 C:\Users\silic\Source\Repos\TerrainGenerator\TerrainGenerator\bin\Debug\Aspose.3D.dll
 C:\Users\silic\Source\Repos\TerrainGenerator\TerrainGenerator\obj\Debug\TerrainGenerator.exe
 C:\Users\silic\Source\Repos\TerrainGenerator\TerrainGenerator\obj\Debug\TerrainGenerator.pdb
-C:\Users\silic\Source\Repos\TerrainGenerator\TerrainGenerator\bin\Debug\TerrainGenerator.exe.CodeAnalysisLog.xml
-C:\Users\silic\Source\Repos\TerrainGenerator\TerrainGenerator\bin\Debug\TerrainGenerator.exe.lastcodeanalysissucceeded
+C:\Users\silic\Source\Repos\TerrainGenerator\TerrainGenerator\obj\Debug\TerrainGenerator.csprojResolveAssemblyReference.cache

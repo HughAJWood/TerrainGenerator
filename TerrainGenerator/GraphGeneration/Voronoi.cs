@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using Aspose.ThreeD.Entities;
 using Aspose.ThreeD.Utilities;
 using TerrainGenerator.Biomes;
@@ -94,36 +92,40 @@ namespace TerrainGenerator.GraphGeneration
                     var diff = ColoursDifferent(point);
                     if (diff > 1)
                     {
-#if DEBUG
                         RenderNodePointsOnImage(point);
-#endif
+
                         // Points are 2D, so to translate to 3D they are set to the Z property of the 3D node
-                        var node = new VNode
+                        VNode[] node =
                         {
-                            X = point.X,
-                            Z = point.Y
+                            new VNode
+                            {
+                                X = point.X,
+                                Z = point.Y
+                            }
                         };
                         // Weld points within 1 unit from each other by determining if we already have one that exists
                         // then using the existing node instead
                         // A weld is calculated by determining the X,Z distance to see if we have a node stored already
                         // that is within 2 units of the node we are creating
-                        VNode existingNode = Nodes.FirstOrDefault(n => n.Adjacent(node));
-                        if (existingNode == null)
+                        var orderedNodes = Nodes.OrderBy(n => DistanceSqrd(n, node[0]));
+
+                        var existingNode = orderedNodes.FirstOrDefault();
+                        if (existingNode == null || Math.Sqrt(DistanceSqrd(existingNode, node[0])) > 5)
                         {
                             // Optimise node creation by skipping perlin lookup and ID iteration for only when needed
-                            node.ID = VNodeId;
-                            node.Y = _perlin.GetPixel(point.X, point.Y).R;
-                            Nodes.Add(node);
-                            Mesh.ControlPoints.Add(new Vector4(node.X, node.Y, node.Z, 1));
+                            node[0].ID = VNodeId;
+                            node[0].Y = _perlin.GetPixel(point.X, point.Y).R;
+                            Mesh.ControlPoints.Add(new Vector4(node[0].X, node[0].Y, node[0].Z, 1));
+                            Nodes.Add(node[0]);
                         }
                         else
                         {
-                            node = existingNode;
+                            _image.SetPixel(existingNode.X, existingNode.Z, Color.Lime);
+                            node[0] = existingNode;
                         }
-                        nodesForEdges.Add(node);
+                        nodesForEdges.Add(node[0]);
                     }
                 }
-                //if (i++ > 20) return;
                 AddNodesToMeshAsPolys(nodesForEdges);
                 nodesForEdges.Clear();
             }
@@ -132,14 +134,14 @@ namespace TerrainGenerator.GraphGeneration
         private void RenderNodePointsOnImage(Point point)
         {
             _image.SetPixel(point.X, point.Y, Color.Red);
-            if (point.X + 1 < X) _image.SetPixel(point.X + 1, point.Y, Color.Red);
-            if (point.X - 1 > 0) _image.SetPixel(point.X - 1, point.Y, Color.Red);
-            if (point.Y - 1 > 0) _image.SetPixel(point.X, point.Y - 1, Color.Red);
-            if (point.X + 1 < X && point.Y - 1 > 0) _image.SetPixel(point.X + 1, point.Y - 1, Color.Red);
-            if (point.X - 1 > 0 && point.Y - 1 > 0) _image.SetPixel(point.X - 1, point.Y - 1, Color.Red);
-            if (point.Y + 1 < Y) _image.SetPixel(point.X, point.Y + 1, Color.Red);
-            if (point.X + 1 < X && point.Y + 1 < Y) _image.SetPixel(point.X + 1, point.Y + 1, Color.Red);
-            if (point.X - 1 > 0 && point.Y + 1 < Y) _image.SetPixel(point.X - 1, point.Y + 1, Color.Red);
+            //if (point.X + 1 < X) _image.SetPixel(point.X + 1, point.Y, Color.Red);
+            //if (point.X - 1 > 0) _image.SetPixel(point.X - 1, point.Y, Color.Red);
+            //if (point.Y - 1 > 0) _image.SetPixel(point.X, point.Y - 1, Color.Red);
+            //if (point.X + 1 < X && point.Y - 1 > 0) _image.SetPixel(point.X + 1, point.Y - 1, Color.Red);
+            //if (point.X - 1 > 0 && point.Y - 1 > 0) _image.SetPixel(point.X - 1, point.Y - 1, Color.Red);
+            //if (point.Y + 1 < Y) _image.SetPixel(point.X, point.Y + 1, Color.Red);
+            //if (point.X + 1 < X && point.Y + 1 < Y) _image.SetPixel(point.X + 1, point.Y + 1, Color.Red);
+            //if (point.X - 1 > 0 && point.Y + 1 < Y) _image.SetPixel(point.X - 1, point.Y + 1, Color.Red);
         }
 
         private void AddNodesToMeshAsPolys(List<VNode> nodesForEdges)
@@ -149,7 +151,7 @@ namespace TerrainGenerator.GraphGeneration
                 VNode midPoint;
                 nodesForEdges = ConvexSort(nodesForEdges, out midPoint);
                 Mesh.ControlPoints.Add(new Vector4(midPoint.X, midPoint.Y, midPoint.Z, 1));
-
+                
                 // Create voronoi region 1 tri at a time
                 for (var index = 0; index < nodesForEdges.Count; index++)
                 {
@@ -212,14 +214,15 @@ namespace TerrainGenerator.GraphGeneration
             return n % 360;
         }
 
-        private int ColoursDifferent(Point p)
+        private int ColoursDifferent(Point inPoint)
         {
-            var x = p.X;
-            var y = p.Y;
+            var x = inPoint.X;
+            var y = inPoint.Y;
             var diffCount = 0;
             var edge = false;
             var excludedSamples = new List<Color> { _colorMap.GetPixel(x, y) };
             var allSamples = new List<Color>();
+            
             for (var xx = x - 1; xx <= x + 1; xx++)
             {
                 if (xx < 0 || xx >= X)
@@ -243,6 +246,7 @@ namespace TerrainGenerator.GraphGeneration
                     }
                 }
             }
+
             if (edge) diffCount++;
             return diffCount;
         }
@@ -489,10 +493,16 @@ namespace TerrainGenerator.GraphGeneration
             var yd = hh - point.Y;
             return xd*xd + yd*yd;
         }
+        private int DistanceSqrd(VNode a, VNode b)
+        {
+            var xd = a.X - b.X;
+            var yd = a.Z - b.Z;
+            return xd * xd + yd * yd;
+        }
 
         ~Voronoi()
         {
-            this.Dispose();
+            Dispose();
         }
 
         public void Dispose()

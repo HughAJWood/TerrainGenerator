@@ -9,9 +9,11 @@ namespace TerrainGenerator.General
 {
     static class Helpers
     {
-        internal static bool Adjacent(this VNode a, VNode b, int tolerance = 3)
+        internal static bool Adjacent(this VNode a, VNode b, double tolerance = 3.0)
         {
-            var distance = Math.Abs(a.X - b.X) + Math.Abs(a.Z - b.Z);
+            var xd = a.X - b.X;
+            var yd = a.Z - b.Z;
+            var distance = Math.Sqrt(xd*xd + yd*yd);
             return distance < tolerance;
         }
     }
